@@ -288,8 +288,8 @@ async function saveBookings(list){
   }
 }
 
-// ---- n8n webhook endpoint ----
-const N8N_WEBHOOK_URL = 'https://joenegm.app.n8n.cloud/webhook/16e2f6c9-d9f1-4cbe-84d2-555c4999fe12/clinic-booking';
+// ---- Our own Vercel serverless proxy (avoids calling n8n directly from the browser) ----
+const BOOKING_ENDPOINT = '/api/book';
 
 // ---- Booking submit ----
 document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
@@ -316,20 +316,18 @@ document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
   let n8nOk = false;
   let n8nErrorDetail = '';
   try{
-    const params = new URLSearchParams();
-    Object.entries(booking).forEach(([k, v]) => params.append(k, v));
-
-    const res = await fetch(N8N_WEBHOOK_URL, {
+    const res = await fetch(BOOKING_ENDPOINT, {
       method: 'POST',
-      body: params
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(booking)
     });
     n8nOk = res.ok;
     if(!res.ok){
-      n8nErrorDetail = 'الرد من n8n كان status: ' + res.status + ' ' + res.statusText;
+      n8nErrorDetail = 'الرد كان status: ' + res.status + ' ' + res.statusText;
     }
   }catch(err){
     n8nErrorDetail = err.message || String(err);
-    console.error('n8n webhook error', err);
+    console.error('booking endpoint error', err);
   }
 
   // keep a local copy too, only works inside the Claude.ai artifact preview
