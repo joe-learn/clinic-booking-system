@@ -316,10 +316,12 @@ document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
   let n8nOk = false;
   let n8nErrorDetail = '';
   try{
+    const params = new URLSearchParams();
+    Object.entries(booking).forEach(([k, v]) => params.append(k, v));
+
     const res = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(booking)
+      body: params
     });
     n8nOk = res.ok;
     if(!res.ok){
