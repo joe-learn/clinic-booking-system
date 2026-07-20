@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>نظام حجز العيادة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1A22; --panel:#152530; --panel-2:#1B2E3A; --line:#28404F;
+    --text:#EAF1F5; --muted:#7F97A5; --gold:#E3A84B; --gold-dim:#8A6A34;
+    --teal:#4FBFB8; --danger:#C97B6A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:'Tajawal',sans-serif;padding:0 0 60px;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;}
+
+  /* Nav */
+  .nav{position:sticky;top:0;background:var(--ink);border-bottom:1px solid var(--line);z-index:10;padding:14px 0;margin-bottom:24px;}
+  .nav-inner{max-width:920px;margin:0 auto;padding:0 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .tabs{display:flex;gap:8px;}
+  .tab-btn{
+    background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:9px 18px;border-radius:100px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:14px;
+    cursor:pointer;transition:.15s;
+  }
+  .tab-btn.active{background:var(--teal);color:#06201f;border-color:var(--teal);}
+  .brand{font-weight:900;font-size:15px;color:var(--gold);}
+
+  section{display:none;}
+  section.active{display:block;}
+
+  /* Hero */
+  .hero{padding:30px 0 10px;border-bottom:1px solid var(--line);margin-bottom:26px;}
+  .hero h1{font-size:30px;margin:0 0 8px;font-weight:900;}
+  .hero input.name-edit{
+    background:transparent;border:none;border-bottom:2px dashed var(--line);color:var(--gold);
+    font-family:'Tajawal',sans-serif;font-weight:900;font-size:30px;width:100%;max-width:420px;padding:2px 0;
+  }
+  .hero input.name-edit:focus{outline:none;border-color:var(--teal);}
+  .hero p{color:var(--muted);font-size:15px;margin:0 0 20px;max-width:560px;line-height:1.8;}
+  .stat-strip{display:flex;gap:24px;flex-wrap:wrap;}
+  .stat-strip div{font-size:13px;color:var(--muted);}
+  .stat-strip b{color:var(--text);display:block;font-size:18px;font-family:'IBM Plex Mono',monospace;}
+
+  /* Services */
+  h2.section-title{font-size:18px;margin:0 0 16px;color:var(--text);}
+  .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:30px;}
+  .svc-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;}
+  .svc-card .svc-name{font-weight:700;font-size:15px;}
+  .svc-card .svc-meta{color:var(--muted);font-size:12.5px;}
+  .svc-card .svc-price{font-family:'IBM Plex Mono',monospace;color:var(--gold);font-size:20px;font-weight:600;}
+  .svc-card button{
+    margin-top:4px;background:var(--teal);border:none;color:#06201f;font-weight:700;
+    padding:9px;border-radius:8px;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:13px;
+  }
+
+  .info-strip{display:flex;gap:26px;flex-wrap:wrap;color:var(--muted);font-size:13.5px;padding:18px 0;border-top:1px solid var(--line);}
+  .info-strip b{color:var(--text);}
+
+  /* Panels shared */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px;}
+  .panel h2{font-size:15px;margin:0 0 16px;color:var(--muted);font-weight:700;}
+
+  /* Booking form */
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:18px;}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;}
+  .field input,.field select,.field textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;color:var(--text);
+    padding:11px 12px;font-family:'Tajawal',sans-serif;font-size:14px;
+  }
+  .field textarea{resize:vertical;min-height:70px;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal);}
+  .submit-btn{
+    background:var(--gold);border:none;color:#241a06;font-weight:700;padding:13px 26px;border-radius:10px;
+    cursor:pointer;font-family:'Tajawal',sans-serif;font-size:15px;
+  }
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .confirm-box{
+    display:none;background:rgba(79,191,184,.1);border:1px solid var(--teal);border-radius:14px;padding:18px;margin-top:6px;
+  }
+  .confirm-box.show{display:block;}
+  .confirm-box h3{margin:0 0 10px;color:var(--teal);font-size:15px;}
+  .confirm-box ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .confirm-box li{font-size:13.5px;color:var(--text);display:flex;gap:8px;align-items:center;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;}
+
+  /* Admin */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .kpi .label{color:var(--muted);font-size:12.5px;margin-bottom:8px;}
+  .kpi .value{font-family:'IBM Plex Mono',monospace;font-size:24px;color:var(--gold);font-weight:600;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:right;color:var(--muted);font-weight:700;padding:10px;border-bottom:1px solid var(--line);font-size:12px;}
+  td{padding:10px;border-bottom:1px solid var(--line);}
+  .badge{padding:4px 10px;border-radius:100px;font-size:11.5px;font-weight:700;display:inline-block;}
+  .badge.confirmed{background:rgba(79,191,184,.15);color:var(--teal);}
+  .badge.reminder{background:rgba(227,168,75,.15);color:var(--gold);margin-inline-start:4px;}
+  .empty{color:var(--muted);font-size:13.5px;text-align:center;padding:30px 0;}
+  .reset-btn{
+    background:transparent;border:1px solid var(--danger);color:var(--danger);padding:8px 16px;border-radius:8px;
+    font-family:'Tajawal',sans-serif;font-size:12.5px;cursor:pointer;
+  }
+  .admin-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .note{color:var(--muted);font-size:12px;line-height:1.8;border-top:1px dashed var(--line);padding-top:14px;margin-top:6px;}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-inner">
+    <span class="brand">⚕ نظام الحجز</span>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="home">الرئيسية</button>
+      <button class="tab-btn" data-tab="booking">احجز موعد</button>
+      <button class="tab-btn" data-tab="admin">لوحة التحكم</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- HOME -->
+  <section id="home" class="active">
+    <div class="hero">
+      <h1><input class="name-edit" id="clinicName" value="عيادة النور لطب الأسنان"></h1>
+      <p>حجز موعدك بيتم تلقائي، وبنبعتلك تأكيد فوري وتذكير قبل الموعد بيوم — من غير ما حد يتصل أو يستنى رد.</p>
+      <div class="stat-strip">
+        <div><b>+4</b> خدمات متاحة</div>
+        <div><b>&lt; 1 دقيقة</b> وقت تأكيد الحجز</div>
+        <div><b>يوم كامل</b> قبل الموعد بييجي تذكير</div>
+      </div>
+    </div>
+
+    <h2 class="section-title">الخدمات</h2>
+    <div class="services-grid" id="servicesGrid"></div>
+
+    <div class="info-strip">
+      <div>📍 <b>العنوان:</b> شارع الجمهورية، المعادي</div>
+      <div>🕐 <b>مواعيد العمل:</b> يوميًا ١٠ص - ٨م (عدا الجمعة)</div>
+      <div>📞 <b>تليفون:</b> 0100 000 0000</div>
+    </div>
+  </section>
+
+  <!-- BOOKING -->
+  <section id="booking">
+    <div class="panel">
+      <h2>بيانات الحجز</h2>
+      <form id="bookingForm">
+        <div class="form-grid">
+          <div class="field">
+            <label>الاسم بالكامل</label>
+            <input type="text" id="fName" required placeholder="اكتب اسمك">
+          </div>
+          <div class="field">
+            <label>رقم الهاتف</label>
+            <input type="tel" id="fPhone" required placeholder="01xxxxxxxxx">
+          </div>
+          <div class="field">
+            <label>الخدمة المطلوبة</label>
+            <select id="fService" required></select>
+          </div>
+          <div class="field">
+            <label>التاريخ المفضل</label>
+            <input type="date" id="fDate" required>
+          </div>
+          <div class="field">
+            <label>الوقت المفضل</label>
+            <select id="fTime" required>
+              <option>10:00 ص</option><option>11:00 ص</option><option>12:00 م</option>
+              <option>1:00 م</option><option>3:00 م</option><option>4:00 م</option><option>5:00 م</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:18px;">
+          <label>ملاحظات (اختياري)</label>
+          <textarea id="fNotes" placeholder="أي تفاصيل حابب تضيفها"></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">تأكيد الحجز</button>
+      </form>
+
+      <div class="confirm-box" id="confirmBox">
+        <h3>تم الحجز بنجاح ✅</h3>
+        <ul>
+          <li><span class="dot"></span> تسجيل الحجز في النظام فورًا</li>
+          <li><span class="dot"></span> إرسال رسالة تأكيد واتساب/واتساب بيزنس تلقائيًا</li>
+          <li><span class="dot"></span> جدولة رسالة تذكير قبل الموعد بيوم واحد</li>
+        </ul>
+      </div>
+
+      <div class="confirm-box" id="errorBox" style="border-color:var(--danger);background:rgba(201,123,106,.1);">
+        <h3 style="color:var(--danger);">حصل خطأ في الاتصال بالـ n8n</h3>
+        <p id="errorDetail" style="color:var(--text);font-size:13px;margin:0;line-height:1.8;"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="admin">
+    <div class="admin-top">
+      <h2 class="section-title" style="margin:0;">لوحة الحجوزات + الأتمتة</h2>
+      <button class="reset-btn" id="resetBtn">مسح بيانات التجربة</button>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="label">إجمالي الحجوزات</div><div class="value" id="kpiTotal">—</div></div>
+      <div class="kpi"><div class="label">حجوزات اليوم</div><div class="value" id="kpiToday">—</div></div>
+      <div class="kpi"><div class="label">حجوزات الأسبوع القادم</div><div class="value" id="kpiWeek">—</div></div>
+    </div>
+
+    <div class="panel">
+      <div id="tableWrap"><div class="empty">جارٍ التحميل...</div></div>
+    </div>
+
+    <div class="note">
+      * التأكيد والتذكير هنا محاكاة لتوضيح شكل النظام. في التطبيق الفعلي، الحجز بييجي عن طريق webhook لأداة الأتمتة (زي n8n)، اللي بترسل رسالة واتساب/إيميل حقيقية وتجدول التذكير على تقويم فعلي.
+    </div>
+  </section>
+
+</div>
+
+<script>
+const services = [
+  {id:'checkup', name:'كشف عام', price:150, duration:'20 دقيقة'},
+  {id:'cleaning', name:'تنظيف الأسنان', price:300, duration:'40 دقيقة'},
+  {id:'ortho', name:'استشارة تقويم', price:250, duration:'30 دقيقة'},
+  {id:'whitening', name:'تبييض الأسنان', price:600, duration:'45 دقيقة'}
+];
+
+// ---- Tabs ----
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'admin') renderAdmin();
+  });
+});
+
+// ---- Home: render services ----
+function renderServices(){
+  const grid = document.getElementById('servicesGrid');
+  grid.innerHTML = services.map(s => `
+    <div class="svc-card">
+      <div class="svc-name">${s.name}</div>
+      <div class="svc-meta">مدة الجلسة: ${s.duration}</div>
+      <div class="svc-price">${s.price} جنيه</div>
+      <button onclick="goToBooking('${s.id}')">احجز الآن</button>
+    </div>
+  `).join('');
+}
+function goToBooking(serviceId){
+  document.querySelector('.tab-btn[data-tab="booking"]').click();
+  document.getElementById('fService').value = serviceId;
+}
+
+// ---- Booking form: populate service select ----
+function populateServiceSelect(){
+  const sel = document.getElementById('fService');
+  sel.innerHTML = services.map(s => `<option value="${s.id}">${s.name} — ${s.price} جنيه</option>`).join('');
+}
+
+// ---- Storage helpers ----
+const STORAGE_KEY = 'clinic:bookings';
+
+const hasArtifactStorage = typeof window.storage !== 'undefined';
+
+async function loadBookings(){
+  if(!hasArtifactStorage) return [];
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    return res ? JSON.parse(res.value) : [];
+  }catch(e){
+    return [];
+  }
+}
+async function saveBookings(list){
+  if(!hasArtifactStorage) return false;
+  try{
+    const res = await window.storage.set(STORAGE_KEY, JSON.stringify(list), true);
+    return !!res;
+  }catch(e){
+    console.error('storage error', e);
+    return false;
+  }
+}
+
+// ---- n8n webhook endpoint ----
+const N8N_WEBHOOK_URL = 'https://joenegm.app.n8n.cloud/webhook/16e2f6c9-d9f1-4cbe-84d2-555c4999fe12/clinic-booking';
+
+// ---- Booking submit ----
+document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'جارٍ الحجز...';
+
+  const service = services.find(s => s.id === document.getElementById('fService').value) || services[0];
+  const dateVal = document.getElementById('fDate').value;
+
+  const booking = {
+    id: 'bk_' + Date.now(),
+    name: document.getElementById('fName').value,
+    phone: document.getElementById('fPhone').value,
+    serviceId: service.id,
+    serviceName: service.name,
+    date: dateVal,
+    time: document.getElementById('fTime').value,
+    notes: document.getElementById('fNotes').value,
+    createdAt: new Date().toISOString(),
+    status: 'confirmed'
+  };
+
+  let n8nOk = false;
+  let n8nErrorDetail = '';
+  try{
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      body: JSON.stringify(booking)
+    });
+    n8nOk = res.ok;
+    if(!res.ok){
+      n8nErrorDetail = 'الرد من n8n كان status: ' + res.status + ' ' + res.statusText;
+    }
+  }catch(err){
+    n8nErrorDetail = err.message || String(err);
+    console.error('n8n webhook error', err);
+  }
+
+  // keep a local copy too, only works inside the Claude.ai artifact preview
+  const list = await loadBookings();
+  list.push(booking);
+  const localOk = await saveBookings(list);
+
+  btn.disabled = false; btn.textContent = 'تأكيد الحجز';
+
+  document.getElementById('confirmBox').classList.remove('show');
+  document.getElementById('errorBox').classList.remove('show');
+
+  if(n8nOk){
+    document.getElementById('confirmBox').classList.add('show');
+    document.getElementById('bookingForm').reset();
+    populateServiceSelect();
+  } else {
+    document.getElementById('errorDetail').textContent = n8nErrorDetail + (hasArtifactStorage ? '' : ' (ملاحظة: التخزين المحلي داخل الأداة مش متاح خارج شات Claude، فده مش بديل هنا)');
+    document.getElementById('errorBox').classList.add('show');
+  }
+});
+
+// ---- Admin render ----
+async function renderAdmin(){
+  const wrap = document.getElementById('tableWrap');
+  wrap.innerHTML = '<div class="empty">جارٍ التحميل...</div>';
+
+  const list = await loadBookings();
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7 = new Date(today); in7.setDate(in7.getDate()+7);
+
+  const todayCount = list.filter(b => b.date && sameDay(new Date(b.date), today)).length;
+  const weekCount = list.filter(b => b.date && new Date(b.date) >= today && new Date(b.date) <= in7).length;
+
+  document.getElementById('kpiTotal').textContent = list.length;
+  document.getElementById('kpiToday').textContent = todayCount;
+  document.getElementById('kpiWeek').textContent = weekCount;
+
+  if(list.length === 0){
+    wrap.innerHTML = '<div class="empty">لسه معملش حد حجز — جرّب احجز موعد من التاب التاني وارجع هنا.</div>';
+    return;
+  }
+
+  const sorted = [...list].sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+  wrap.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>الاسم</th><th>الهاتف</th><th>الخدمة</th><th>الموعد</th><th>الحالة</th><th>الأتمتة</th>
+      </tr></thead>
+      <tbody>
+        ${sorted.map(b => `
+          <tr>
+            <td>${escapeHtml(b.name)}</td>
+            <td>${escapeHtml(b.phone)}</td>
+            <td>${escapeHtml(b.serviceName)}</td>
+            <td>${b.date} — ${b.time}</td>
+            <td><span class="badge confirmed">مؤكد</span></td>
+            <td>
+              <span class="badge confirmed">تأكيد ✓</span>
+              <span class="badge reminder">تذكير ⏰</span>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function sameDay(d1,d2){
+  return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
+}
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+// ---- Reset demo data ----
+document.getElementById('resetBtn').addEventListener('click', async ()=>{
+  if(!confirm('هتتمسح كل بيانات الحجوزات التجريبية. متأكد؟')) return;
+  try{
+    await window.storage.delete(STORAGE_KEY, true);
+  }catch(e){ /* key may not exist yet, ignore */ }
+  renderAdmin();
+});
+
+// ---- Init ----
+renderServices();
+populateServiceSelect();
+document.getElementById('fDate').valueAsDate = new Date();
+</script>
+</body>
+</html>
