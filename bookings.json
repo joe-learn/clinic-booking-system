@@ -8,13 +8,13 @@
       "appointmentDate": "2026-07-22",
       "appointmentTime": "3:00 م",
       "notes": "ممكن أعرف مواعيد العمل؟",
-      "status": "confirmed",
+      "status": "cancelled",
       "receivedAt": "2026-07-21T18:29:27.943Z",
       "whatsappStatus": "sent",
       "reminderSent": true,
       "id": 1,
       "createdAt": "2026-07-21T18:29:27.960Z",
-      "updatedAt": "2026-07-21T18:32:03.534Z"
+      "updatedAt": "2026-07-21T20:02:12.524Z"
     },
     {
       "bookingId": "bk_1784662596895",
@@ -33,5 +33,5 @@
       "updatedAt": "2026-07-21T19:36:37.671Z"
     }
   ],
-  "updatedAt": "2026-07-21T20:00:24.670Z"
+  "updatedAt": "2026-07-21T20:05:24.710Z"
 }
