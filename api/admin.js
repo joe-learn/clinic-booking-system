@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const N8N_ADMIN_WEBHOOK = 'https://joenegm.app.n8n.cloud/webhook/36de1021-6a8f-4d7e-8277-2b32a386ab80/clinic-admin';
+  const N8N_ADMIN_WEBHOOK = 'https://joenegm.app.n8n.cloud/webhook/d9479756-8133-46ef-acaf-112d2b942754/clinic-admin-v2';
 
   try {
     const upstream = await fetch(N8N_ADMIN_WEBHOOK, {
