@@ -1,1 +1,37 @@
-{"bookings": [], "updatedAt": "2026-07-21T00:00:00.000Z"}
+{
+  "bookings": [
+    {
+      "bookingId": "bk_1784658567943",
+      "clientName": "يوسف سامح نجم",
+      "phone": "01068012917",
+      "serviceName": "تبييض الأسنان – 600 جنيه",
+      "appointmentDate": "2026-07-22",
+      "appointmentTime": "3:00 م",
+      "notes": "ممكن أعرف مواعيد العمل؟",
+      "status": "confirmed",
+      "receivedAt": "2026-07-21T18:29:27.943Z",
+      "whatsappStatus": "sent",
+      "reminderSent": true,
+      "id": 1,
+      "createdAt": "2026-07-21T18:29:27.960Z",
+      "updatedAt": "2026-07-21T18:32:03.534Z"
+    },
+    {
+      "bookingId": "bk_1784662596895",
+      "clientName": "عزيزة الشيخ",
+      "phone": "01068012917",
+      "serviceName": "تبييض الأسنان – 600 جنيه",
+      "appointmentDate": "2026-07-23",
+      "appointmentTime": "5:00 م",
+      "notes": "مين الدكاترة المتاحين؟",
+      "status": "confirmed",
+      "receivedAt": "2026-07-21T19:36:36.895Z",
+      "whatsappStatus": "sent",
+      "reminderSent": null,
+      "id": 2,
+      "createdAt": "2026-07-21T19:36:36.910Z",
+      "updatedAt": "2026-07-21T19:36:37.671Z"
+    }
+  ],
+  "updatedAt": "2026-07-21T19:54:10.422Z"
+}
