@@ -51,6 +51,7 @@
   .msg.success{background:#EEF6EE;border:1.5px solid #4C9A6A;color:#2E6B45;}
   .msg.error{background:#FCEDEC;border:1.5px solid var(--danger);color:#963B34;}
   .loading{text-align:center;color:var(--muted);padding:60px 0;}
+  .back{display:block;text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted);text-decoration:none;}
 </style>
 </head>
 <body>
@@ -117,17 +118,24 @@ function render(){
             <label>الوقت الجديد</label>
             <div class="slots" id="newSlots"><span style="color:var(--muted);font-size:12.5px;">اختار تاريخ الأول</span></div>
           </div>
-          <button class="btn btn-reschedule" id="confirmRescheduleBtn" style="width:100%;">تأكيد التعديل</button>
+          <div class="actions">
+            <button class="btn btn-reschedule" id="confirmRescheduleBtn" style="flex:1;">تأكيد التعديل</button>
+            <button class="btn" id="cancelRescheduleBtn" style="flex:1;background:transparent;border:1.5px solid var(--line);color:var(--muted);">تراجع</button>
+          </div>
         </div>
       ` : ''}
       <div class="msg" id="msgBox"></div>
     </div>
+    <a href="index.html" class="back">← الرجوع لصفحة الحجز</a>
   `;
 
   if(!cancelled){
     document.getElementById('cancelBtn').addEventListener('click', doCancel);
     document.getElementById('showRescheduleBtn').addEventListener('click', () => {
       document.getElementById('reschedulePanel').style.display = 'block';
+    });
+    document.getElementById('cancelRescheduleBtn').addEventListener('click', () => {
+      document.getElementById('reschedulePanel').style.display = 'none';
     });
     document.getElementById('newDate').addEventListener('change', renderNewSlots);
     document.getElementById('confirmRescheduleBtn').addEventListener('click', doReschedule);
