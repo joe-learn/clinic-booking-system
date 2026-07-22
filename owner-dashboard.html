@@ -95,6 +95,7 @@ async function boot(){
     return;
   }
 
+  currentClinicId = staff.clinic_id;
   renderShell();
   loadBookings(staff.clinic_id);
 }
@@ -116,9 +117,74 @@ function renderShell(){
       <div class="kpi"><div class="label">مؤكدة</div><div class="value" id="kpiConfirmed">—</div></div>
       <div class="kpi"><div class="label">ملغاة</div><div class="value" id="kpiCancelled">—</div></div>
     </div>
+    <div class="panel" style="margin-bottom:24px;padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <h2 style="font-family:'Almarai',sans-serif;font-size:15px;margin:0;color:var(--blue-deep);">👨‍⚕️ إدارة الدكاترة</h2>
+        <button class="btn btn-primary" id="showAddDoctorBtn" style="padding:8px 14px;font-size:12.5px;">+ إضافة دكتور</button>
+      </div>
+      <div id="doctorsListWrap"><div class="loading">جارٍ تحميل الدكاترة...</div></div>
+      <div id="addDoctorPanel" style="display:none;margin-top:16px;padding-top:16px;border-top:1.5px dashed var(--line);">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px;">
+          <input type="text" id="newDoctorName" placeholder="اسم الدكتور" style="border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:'Tajawal',sans-serif;">
+          <input type="text" id="newDoctorSpecialty" placeholder="التخصص" style="border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:'Tajawal',sans-serif;">
+          <input type="email" id="newDoctorEmail" placeholder="الإيميل (لتسجيل الدخول)" style="border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:'Tajawal',sans-serif;">
+          <input type="password" id="newDoctorPassword" placeholder="كلمة المرور" style="border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:'Tajawal',sans-serif;">
+        </div>
+        <button class="btn btn-primary" id="confirmAddDoctorBtn">حفظ الدكتور</button>
+        <div id="addDoctorMsg" style="margin-top:10px;font-size:12.5px;"></div>
+      </div>
+    </div>
     <div class="panel"><div id="tableWrap"><div class="loading">جارٍ تحميل الحجوزات...</div></div></div>
   `;
   document.getElementById('logoutBtn').addEventListener('click', async () => { await sb.auth.signOut(); window.location.href = 'login.html'; });
+  document.getElementById('showAddDoctorBtn').addEventListener('click', () => {
+    const p = document.getElementById('addDoctorPanel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('confirmAddDoctorBtn').addEventListener('click', addDoctor);
+  loadDoctors();
+}
+
+async function loadDoctors(){
+  const wrap = document.getElementById('doctorsListWrap');
+  const { data, error } = await sb.from('staff').select('*').eq('clinic_id', currentClinicId).eq('role', 'doctor');
+  if (error) { wrap.innerHTML = '<div class="empty">حصل خطأ: ' + escapeHtml(error.message) + '</div>'; return; }
+  if (!data || data.length === 0) { wrap.innerHTML = '<div class="empty" style="padding:14px 0;">مفيش دكاترة مسجلين لسه</div>'; return; }
+  wrap.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:10px;">
+    ${data.map(d => `
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 16px;">
+        <div style="font-weight:700;font-size:13.5px;">${escapeHtml(d.doctor_name || '—')}</div>
+        <div style="color:var(--muted);font-size:12px;">${escapeHtml(d.specialty || '')}</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+async function addDoctor(){
+  const name = document.getElementById('newDoctorName').value;
+  const specialty = document.getElementById('newDoctorSpecialty').value;
+  const email = document.getElementById('newDoctorEmail').value;
+  const password = document.getElementById('newDoctorPassword').value;
+  const msgBox = document.getElementById('addDoctorMsg');
+  msgBox.textContent = '';
+
+  if (!name || !email || !password) { msgBox.textContent = 'كل الحقول مطلوبة.'; msgBox.style.color = 'var(--danger)'; return; }
+
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) { msgBox.textContent = 'حصل خطأ: ' + error.message; msgBox.style.color = 'var(--danger)'; return; }
+
+  const { error: staffError } = await sb.from('staff').insert({
+    user_id: data.user.id, clinic_id: currentClinicId, role: 'doctor', doctor_name: name, specialty
+  });
+  if (staffError) { msgBox.textContent = 'اتعمل الحساب بس حصل خطأ في الربط: ' + staffError.message; msgBox.style.color = 'var(--danger)'; return; }
+
+  msgBox.textContent = 'تم إضافة الدكتور بنجاح! (لو الحساب محتاج تأكيد إيميل، خليه يفتح بريده ويأكد الأول قبل ما يسجل دخول)';
+  msgBox.style.color = 'var(--success)';
+  document.getElementById('newDoctorName').value = '';
+  document.getElementById('newDoctorSpecialty').value = '';
+  document.getElementById('newDoctorEmail').value = '';
+  document.getElementById('newDoctorPassword').value = '';
+  loadDoctors();
 }
 
 let currentClinicId = null;
