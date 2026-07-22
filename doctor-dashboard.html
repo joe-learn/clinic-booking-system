@@ -30,6 +30,11 @@
 
   .cal-panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;margin-bottom:24px;
     box-shadow:0 6px 24px rgba(30,42,46,.05);}
+  .profile-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-bottom:18px;
+    display:flex;gap:20px;flex-wrap:wrap;align-items:center;box-shadow:0 4px 18px rgba(30,42,46,.04);}
+  .profile-card .stat{display:flex;flex-direction:column;gap:2px;}
+  .profile-card .stat .num{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:19px;color:var(--blue-deep);}
+  .profile-card .stat .lbl{font-size:11.5px;color:var(--muted);}
   .cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
   .cal-nav button{background:var(--mint,#EEF5F2);border:1px solid var(--line);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;color:var(--blue-mid);}
   .cal-nav .month-label{font-family:'Almarai',sans-serif;font-weight:800;font-size:16px;color:var(--blue-deep);}
@@ -95,9 +100,22 @@ async function boot(){
 
   renderShell();
   await loadBookings();
+  renderProfileCard();
   renderCalendar();
   renderDay();
 }
+
+function renderProfileCard(){
+  const total = bookings.filter(b => b.status !== 'cancelled').length;
+  const cancelled = bookings.filter(b => b.status === 'cancelled').length;
+  const today = new Date().toISOString().slice(0,10);
+  const upcoming = bookings.filter(b => b.status !== 'cancelled' && b.appointment_date >= today).length;
+
+  document.getElementById('profileCard').innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">إجمالي الكشوفات</div></div>
+    <div class="stat"><div class="num">${upcoming}</div><div class="lbl">مواعيد قادمة</div></div>
+    <div class="stat"><div class="num">${cancelled}</div><div class="lbl">ملغاة</div></div>
+  `;
 
 function renderShell(){
   document.getElementById('app').innerHTML = `
@@ -105,6 +123,7 @@ function renderShell(){
       <div><h1>🗓️ ${escapeHtml(staff.doctor_name || 'كالندر المواعيد')}</h1><p>${escapeHtml(staff.specialty || '')}</p></div>
       <button class="btn" id="logoutBtn">تسجيل خروج</button>
     </div>
+    <div class="profile-card" id="profileCard"></div>
     <div class="cal-panel">
       <div class="cal-nav">
         <button id="prevBtn">›</button>
@@ -122,7 +141,8 @@ function renderShell(){
 
 async function loadBookings(){
   const { data } = await sb.from('bookings').select('*').eq('clinic_id', staff.clinic_id).order('appointment_time');
-  bookings = data || [];
+  const all = data || [];
+  bookings = all.filter(b => b.doctor_id === staff.id || !b.doctor_id);
 }
 
 function changeMonth(delta){
