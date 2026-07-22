@@ -190,6 +190,7 @@ function render(){
       <div class="success-box" id="successBox">
         <h3>تم الحجز بنجاح ✅</h3>
         <p>هيوصلك تأكيد على واتساب قريبًا.</p>
+        <p id="manageLink" style="margin-top:10px;font-size:13px;"></p>
       </div>
       <div class="error-box" id="errorBox"></div>
     </div>
@@ -240,7 +241,7 @@ async function renderSlots(){
   if(!date){ grid.innerHTML = '<span class="slot-placeholder">اختار تاريخ الأول عشان تشوف المواعيد المتاحة</span>'; return; }
   grid.innerHTML = '<span class="slot-placeholder">جارٍ التحقق من المواعيد المتاحة...</span>';
 
-  const { data: existing } = await sb.from('bookings').select('appointment_time')
+  const { data: existing } = await sb.from('public_availability').select('appointment_time')
     .eq('clinic_id', clinic.id).eq('appointment_date', date).eq('status', 'confirmed');
 
   const taken = new Set((existing || []).map(b => b.appointment_time));
@@ -274,6 +275,7 @@ async function submitBooking(e){
     clinic_id: clinic.id,
     service_id: service.id,
     service_name: service.name,
+    price: service.price,
     client_name: document.getElementById('fName').value,
     phone: document.getElementById('fPhone').value,
     appointment_date: document.getElementById('fDate').value,
@@ -282,7 +284,7 @@ async function submitBooking(e){
     status: 'confirmed'
   };
 
-  const { error } = await sb.from('bookings').insert(payload);
+  const { data: inserted, error } = await sb.from('bookings').insert(payload).select('id').single();
 
   btn.disabled = false; btn.textContent = 'تأكيد الحجز';
 
@@ -292,7 +294,10 @@ async function submitBooking(e){
   }
 
   document.getElementById('bookingForm').style.display = 'none';
-  document.getElementById('successBox').style.display = 'block';
+  const successBox = document.getElementById('successBox');
+  successBox.style.display = 'block';
+  const linkP = document.getElementById('manageLink');
+  if (linkP && inserted) linkP.innerHTML = 'لتعديل أو إلغاء الحجز لاحقًا: <a href="manage.html?id=' + inserted.id + '" style="color:var(--blue-mid);font-weight:700;">اضغط هنا</a>';
 }
 
 function showError(msg){
