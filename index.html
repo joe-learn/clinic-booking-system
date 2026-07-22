@@ -47,7 +47,7 @@
     transition:transform .15s, box-shadow .15s, border-color .15s; cursor:pointer;}
   .svc:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(11,61,102,.08);}
   .svc.selected{border-color:var(--blue-mid);background:linear-gradient(180deg,#fff,#EFF6FB);}
-  .svc .icon{font-size:26px;margin-bottom:8px;}
+  .svc .icon{margin-bottom:8px;display:flex;align-items:center;justify-content:center;}
   .svc .name{font-weight:700;font-size:14.5px;margin-bottom:4px;}
   .svc .price{color:var(--muted);font-size:12.5px;font-family:'IBM Plex Mono',monospace;}
 
@@ -105,7 +105,12 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const MORNING_SLOTS = [{label:'10:00 ص', hour:10}, {label:'11:00 ص', hour:11}, {label:'12:00 م', hour:12}];
 const EVENING_SLOTS = [{label:'1:00 م', hour:13}, {label:'3:00 م', hour:15}, {label:'4:00 م', hour:16}, {label:'5:00 م', hour:17}];
-const SERVICE_ICONS = {'كشف عام':'🦷','تنظيف الأسنان':'✨','استشارة تقويم':'😁','تبييض الأسنان':'💎'};
+const SERVICE_ICONS = {
+  'كشف عام': `<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 3C9 3 7 5 6.5 8c-.4 2.4.2 4 .8 6.3.4 1.6.7 3.7 1.7 4.4.9.6 1.5-.6 2-1.9.4-1 .7-1.8 1-1.8s.6.8 1 1.8c.5 1.3 1.1 2.5 2 1.9 1-.7 1.3-2.8 1.7-4.4.6-2.3 1.2-3.9.8-6.3C17 5 15 3 12 3z" stroke="#1E6FA8" stroke-width="1.4" fill="#EFF6FB"/><path d="M9.5 9.5l1.3 1.3 3.2-3.2" stroke="#1E6FA8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  'تنظيف الأسنان': `<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 3C9 3 7 5 6.5 8c-.4 2.4.2 4 .8 6.3.4 1.6.7 3.7 1.7 4.4.9.6 1.5-.6 2-1.9.4-1 .7-1.8 1-1.8s.6.8 1 1.8c.5 1.3 1.1 2.5 2 1.9 1-.7 1.3-2.8 1.7-4.4.6-2.3 1.2-3.9.8-6.3C17 5 15 3 12 3z" stroke="#1E6FA8" stroke-width="1.4" fill="#EFF6FB"/><path d="M4 5l1.4 1.4M4 9h1.8M19 5l-1.4 1.4M19.5 9h-1.8" stroke="#D9A441" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+  'استشارة تقويم': `<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 3C9 3 7 5 6.5 8c-.4 2.4.2 4 .8 6.3.4 1.6.7 3.7 1.7 4.4.9.6 1.5-.6 2-1.9.4-1 .7-1.8 1-1.8s.6.8 1 1.8c.5 1.3 1.1 2.5 2 1.9 1-.7 1.3-2.8 1.7-4.4.6-2.3 1.2-3.9.8-6.3C17 5 15 3 12 3z" stroke="#1E6FA8" stroke-width="1.4" fill="#EFF6FB"/><path d="M7.5 11.5h9M9 11.5v2M12 11.5v2M15 11.5v2" stroke="#D9A441" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+  'تبييض الأسنان': `<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 3C9 3 7 5 6.5 8c-.4 2.4.2 4 .8 6.3.4 1.6.7 3.7 1.7 4.4.9.6 1.5-.6 2-1.9.4-1 .7-1.8 1-1.8s.6.8 1 1.8c.5 1.3 1.1 2.5 2 1.9 1-.7 1.3-2.8 1.7-4.4.6-2.3 1.2-3.9.8-6.3C17 5 15 3 12 3z" stroke="#1E6FA8" stroke-width="1.4" fill="#EFF6FB"/><path d="M5 4l.6 1.6L7 6l-1.4.6L5 8.2 4.4 6.6 3 6l1.4-.6z" fill="#D9A441"/><path d="M18.5 3.5l.4 1.1 1.1.4-1.1.4-.4 1.1-.4-1.1-1.1-.4 1.1-.4z" fill="#D9A441"/></svg>`
+};
 
 let clinic = null;
 let services = [];
