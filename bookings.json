@@ -11,12 +11,12 @@
       "status": "confirmed",
       "receivedAt": "2026-07-21T20:17:27.157Z",
       "whatsappStatus": "sent",
-      "reminderSent": null,
+      "reminderSent": true,
       "recallReminderSent": null,
       "calendarEventId": "bailmgt4b6mn7scaujvbhvms30",
       "id": 1,
       "createdAt": "2026-07-21T20:17:27.172Z",
-      "updatedAt": "2026-07-21T20:18:47.163Z"
+      "updatedAt": "2026-07-22T06:00:24.801Z"
     },
     {
       "bookingId": "bk_1784665239765",
@@ -29,13 +29,13 @@
       "status": "confirmed",
       "receivedAt": "2026-07-21T20:20:39.765Z",
       "whatsappStatus": "sent",
-      "reminderSent": null,
+      "reminderSent": true,
       "recallReminderSent": null,
       "calendarEventId": "71s25on4r7hhvtmhf33vriq41o",
       "id": 2,
       "createdAt": "2026-07-21T20:20:39.780Z",
-      "updatedAt": "2026-07-21T20:21:00.404Z"
+      "updatedAt": "2026-07-22T06:00:24.860Z"
     }
   ],
-  "updatedAt": "2026-07-22T06:00:24.674Z"
+  "updatedAt": "2026-07-22T06:05:24.664Z"
 }
