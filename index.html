@@ -114,7 +114,9 @@ const SERVICE_ICONS = {
 
 let clinic = null;
 let services = [];
+let doctors = [];
 let selectedServiceId = null;
+let selectedDoctorId = null;
 let selectedSlot = null;
 
 function escapeHtml(str){
@@ -133,6 +135,9 @@ async function init(){
 
   const { data: svcRows } = await sb.from('services').select('*').eq('clinic_id', clinic.id).order('price');
   services = svcRows || [];
+
+  const { data: docRows } = await sb.from('staff').select('id, doctor_name, specialty').eq('clinic_id', clinic.id).eq('role', 'doctor');
+  doctors = docRows || [];
 
   render();
 }
@@ -166,6 +171,13 @@ function render(){
           <label>الاسم بالكامل</label>
           <input type="text" id="fName" required placeholder="اكتب اسمك">
         </div>
+        ${doctors.length > 1 ? `
+        <div class="field">
+          <label>الدكتور</label>
+          <select id="fDoctor" required>
+            ${doctors.map(d => `<option value="${d.id}">${escapeHtml(d.doctor_name)} — ${escapeHtml(d.specialty || '')}</option>`).join('')}
+          </select>
+        </div>` : ''}
         <div class="row2">
           <div class="field">
             <label>رقم الهاتف</label>
@@ -247,9 +259,12 @@ async function renderSlots(){
   const taken = new Set((existing || []).map(b => b.appointment_time));
   selectedSlot = null;
 
+  const allTaken = MORNING_SLOTS.concat(EVENING_SLOTS).every(s => taken.has(s.label));
+
   grid.innerHTML =
     slotGroupHtml('🌅 الفترة الصباحية', MORNING_SLOTS, taken) +
-    slotGroupHtml('🌇 فترة الظهيرة والمساء', EVENING_SLOTS, taken);
+    slotGroupHtml('🌇 فترة الظهيرة والمساء', EVENING_SLOTS, taken) +
+    (allTaken ? '<div style="text-align:center;padding:8px 0;font-size:13px;">اليوم ده محجوز بالكامل. <a href="waitlist.html" style="color:var(--blue-mid);font-weight:700;">سجّل في قائمة الانتظار</a></div>' : '');
 }
 
 function selectSlot(label, btn){
@@ -271,11 +286,16 @@ async function submitBooking(e){
   btn.disabled = true; btn.textContent = 'جارٍ الحجز...';
 
   const service = services.find(s => s.id === selectedServiceId);
+  let doctorId = null;
+  if (doctors.length === 1) doctorId = doctors[0].id;
+  else if (doctors.length > 1) doctorId = document.getElementById('fDoctor').value;
+
   const payload = {
     clinic_id: clinic.id,
     service_id: service.id,
     service_name: service.name,
     price: service.price,
+    doctor_id: doctorId,
     client_name: document.getElementById('fName').value,
     phone: document.getElementById('fPhone').value,
     appointment_date: document.getElementById('fDate').value,
