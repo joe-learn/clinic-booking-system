@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كالندر المواعيد — د. الطاقم الطبي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F7F3EA; --card:#FFFFFF; --line:#E7E0D2;
+    --blue-deep:#0B3D66; --blue-mid:#1E6FA8; --blue-light:#5FA8D3;
+    --gold:#D9A441; --gold-deep:#B9821F; --ink:#1E2A2E; --muted:#7A7264; --danger:#C65A52;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',sans-serif;padding:26px 20px 60px;position:relative;overflow-x:hidden;}
+  h1{font-family:'Almarai',sans-serif;margin:0;}
+  .wrap{max-width:720px;margin:0 auto;position:relative;z-index:1;}
+  .blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.25;z-index:0;pointer-events:none;}
+  .blob1{width:300px;height:300px;background:var(--blue-light);top:-110px;right:-90px;}
+  .blob2{width:240px;height:240px;background:var(--gold);bottom:-70px;left:-90px;opacity:.2;}
+
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;flex-wrap:wrap;gap:12px;}
+  .top h1{font-size:22px;font-weight:800;
+    background:linear-gradient(90deg,var(--blue-deep),var(--blue-mid));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .top p{margin:4px 0 0;color:var(--muted);font-size:13px;}
+  .btn{border:none;border-radius:10px;padding:9px 16px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;cursor:pointer;
+    background:transparent;border:1px solid var(--line);color:var(--muted);}
+
+  .day-group{margin-bottom:22px;}
+  .day-label{font-family:'Almarai',sans-serif;font-weight:800;font-size:15px;color:var(--gold-deep);margin-bottom:10px;
+    display:flex;align-items:center;gap:8px;}
+  .appt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:center;box-shadow:0 3px 14px rgba(30,42,46,.04);}
+  .appt .time{font-family:'Almarai',sans-serif;font-weight:800;color:var(--blue-deep);font-size:15px;min-width:64px;}
+  .appt .info{flex:1;padding:0 14px;}
+  .appt .info .name{font-weight:700;font-size:14px;}
+  .appt .info .svc{color:var(--muted);font-size:12.5px;margin-top:2px;}
+  .appt .badge{background:rgba(30,111,168,.12);color:var(--blue-mid);padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;}
+  .appt.cancelled{opacity:.5;}
+  .appt.cancelled .badge{background:rgba(198,90,82,.12);color:var(--danger);}
+
+  .empty, .loading{color:var(--muted);text-align:center;padding:50px 0;font-size:14px;}
+  .gate{max-width:380px;margin:80px auto;text-align:center;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+
+<div class="wrap" id="app">
+  <div class="loading">جارٍ التحقق من الجلسة...</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wrkhtqomywaqsiywqhcj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indya2h0cW9teXdhcXNpeXdxaGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTEzNTQsImV4cCI6MjEwMDI4NzM1NH0.82xn22D3RUb-6Bp0avRk6-98SmkgL77a2zCTIRrpK_0';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+async function boot(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    document.getElementById('app').innerHTML = `
+      <div class="gate"><p>لازم تسجل دخول الأول.</p><a href="login.html" style="color:var(--blue-mid);font-weight:700;">تسجيل الدخول</a></div>`;
+    return;
+  }
+
+  const { data: staffRows } = await sb.from('staff').select('*').eq('user_id', session.user.id).limit(1);
+  const staff = staffRows && staffRows[0];
+  if (!staff) {
+    document.getElementById('app').innerHTML = '<div class="gate"><p>الحساب ده مش مربوط بأي عيادة.</p></div>';
+    return;
+  }
+
+  document.getElementById('app').innerHTML = `
+    <div class="top">
+      <div>
+        <h1>🗓️ ${escapeHtml(staff.doctor_name || 'كالندر المواعيد')}</h1>
+        <p>${escapeHtml(staff.specialty || '')}</p>
+      </div>
+      <button class="btn" id="logoutBtn">تسجيل خروج</button>
+    </div>
+    <div id="agendaWrap"><div class="loading">جارٍ تحميل المواعيد...</div></div>
+  `;
+  document.getElementById('logoutBtn').addEventListener('click', async () => { await sb.auth.signOut(); window.location.href = 'login.html'; });
+
+  const { data: bookings, error } = await sb.from('bookings').select('*')
+    .eq('clinic_id', staff.clinic_id).gte('appointment_date', new Date().toISOString().slice(0,10))
+    .order('appointment_date').order('appointment_time');
+
+  const wrap = document.getElementById('agendaWrap');
+  if (error) { wrap.innerHTML = '<div class="empty">حصل خطأ: ' + escapeHtml(error.message) + '</div>'; return; }
+  if (!bookings || bookings.length === 0) { wrap.innerHTML = '<div class="empty">مفيش مواعيد قادمة</div>'; return; }
+
+  const byDate = {};
+  bookings.forEach(b => { (byDate[b.appointment_date] = byDate[b.appointment_date] || []).push(b); });
+
+  wrap.innerHTML = Object.entries(byDate).map(([date, list]) => `
+    <div class="day-group">
+      <div class="day-label">📅 ${escapeHtml(date)}</div>
+      ${list.map(b => `
+        <div class="appt ${b.status === 'cancelled' ? 'cancelled' : ''}">
+          <div class="time">${escapeHtml(b.appointment_time || '—')}</div>
+          <div class="info">
+            <div class="name">${escapeHtml(b.client_name)}</div>
+            <div class="svc">${escapeHtml(b.service_name)}</div>
+          </div>
+          <span class="badge">${b.status === 'cancelled' ? 'ملغي' : 'مؤكد'}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+boot();
+</script>
+</body>
+</html>
