@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة الحجز — عيادة النور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F7F3EA; --card:#FFFFFF; --line:#E7E0D2;
+    --blue-deep:#0B3D66; --blue-mid:#1E6FA8; --blue-light:#5FA8D3;
+    --gold:#D9A441; --gold-deep:#B9821F; --ink:#1E2A2E; --muted:#7A7264; --danger:#C65A52;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',sans-serif;padding:26px 20px 60px;position:relative;overflow-x:hidden;}
+  h1,h2{font-family:'Almarai',sans-serif;margin:0;}
+  .wrap{max-width:520px;margin:0 auto;position:relative;z-index:1;}
+  .blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.28;z-index:0;pointer-events:none;}
+  .blob1{width:280px;height:280px;background:var(--blue-light);top:-100px;right:-80px;}
+  .blob2{width:240px;height:240px;background:var(--gold);bottom:-70px;left:-80px;opacity:.2;}
+
+  .brand{text-align:center;font-family:'Almarai',sans-serif;font-weight:800;font-size:16px;margin-bottom:24px;
+    background:linear-gradient(90deg,var(--blue-deep),var(--blue-light));-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;box-shadow:0 8px 28px rgba(30,42,46,.06);}
+  .row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;}
+  .row:last-child{border-bottom:none;}
+  .row b{color:var(--muted);font-weight:700;font-size:13px;}
+  .status-badge{padding:4px 12px;border-radius:100px;font-size:12px;font-weight:700;display:inline-block;}
+  .status-badge.confirmed{background:rgba(30,111,168,.12);color:var(--blue-mid);}
+  .status-badge.cancelled{background:rgba(198,90,82,.12);color:var(--danger);}
+
+  .actions{display:flex;gap:10px;margin-top:20px;}
+  .btn{flex:1;border:none;border-radius:12px;padding:12px;font-family:'Almarai',sans-serif;font-weight:700;font-size:14px;cursor:pointer;}
+  .btn-reschedule{background:linear-gradient(100deg,var(--blue-deep),var(--blue-mid));color:#fff;}
+  .btn-cancel{background:transparent;border:1.5px solid var(--danger);color:var(--danger);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .reschedule-panel{margin-top:18px;padding-top:18px;border-top:1.5px dashed var(--line);display:none;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
+  .field input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Tajawal',sans-serif;font-size:14px;}
+  .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-top:8px;}
+  .slot-btn{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:10px 4px;font-family:'Tajawal',sans-serif;font-size:13px;cursor:pointer;}
+  .slot-btn.selected{background:var(--blue-mid);border-color:var(--blue-mid);color:#fff;font-weight:700;}
+  .slot-btn:disabled{opacity:.3;text-decoration:line-through;cursor:not-allowed;}
+
+  .msg{border-radius:14px;padding:16px;margin-top:16px;font-size:13.5px;text-align:center;display:none;}
+  .msg.success{background:#EEF6EE;border:1.5px solid #4C9A6A;color:#2E6B45;}
+  .msg.error{background:#FCEDEC;border:1.5px solid var(--danger);color:#963B34;}
+  .loading{text-align:center;color:var(--muted);padding:60px 0;}
+</style>
+</head>
+<body>
+<div class="blob blob1"></div><div class="blob blob2"></div>
+<div class="wrap">
+  <div class="brand">⚕ عيادة النور — إدارة الحجز</div>
+  <div id="app"><div class="loading">جارٍ تحميل بيانات الحجز...</div></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wrkhtqomywaqsiywqhcj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indya2h0cW9teXdhcXNpeXdxaGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTEzNTQsImV4cCI6MjEwMDI4NzM1NH0.82xn22D3RUb-6Bp0avRk6-98SmkgL77a2zCTIRrpK_0';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ALL_SLOTS = [
+  {label:'10:00 ص'},{label:'11:00 ص'},{label:'12:00 م'},{label:'1:00 م'},{label:'3:00 م'},{label:'4:00 م'},{label:'5:00 م'}
+];
+
+const params = new URLSearchParams(window.location.search);
+const bookingId = params.get('id');
+let booking = null;
+let selectedNewSlot = null;
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+async function boot(){
+  if(!bookingId){
+    document.getElementById('app').innerHTML = '<div class="card"><p>الرابط غير صحيح.</p></div>';
+    return;
+  }
+  const { data, error } = await sb.rpc('get_booking_by_id', { p_booking_id: bookingId });
+  if(error || !data || data.length === 0){
+    document.getElementById('app').innerHTML = '<div class="card"><p>تعذر العثور على الحجز.</p></div>';
+    return;
+  }
+  booking = data[0];
+  render();
+}
+
+function render(){
+  const cancelled = booking.status === 'cancelled';
+  document.getElementById('app').innerHTML = `
+    <div class="card">
+      <div class="row"><b>الاسم</b><span>${escapeHtml(booking.client_name)}</span></div>
+      <div class="row"><b>الخدمة</b><span>${escapeHtml(booking.service_name)} — ${booking.price ? booking.price + ' جنيه' : ''}</span></div>
+      <div class="row"><b>الموعد</b><span>${escapeHtml(booking.appointment_date)} — ${escapeHtml(booking.appointment_time)}</span></div>
+      <div class="row"><b>الحالة</b><span class="status-badge ${cancelled ? 'cancelled' : 'confirmed'}">${cancelled ? 'ملغي' : 'مؤكد'}</span></div>
+
+      ${!cancelled ? `
+        <div class="actions">
+          <button class="btn btn-reschedule" id="showRescheduleBtn">تعديل الموعد</button>
+          <button class="btn btn-cancel" id="cancelBtn">إلغاء الحجز</button>
+        </div>
+        <div class="reschedule-panel" id="reschedulePanel">
+          <div class="field">
+            <label>التاريخ الجديد</label>
+            <input type="date" id="newDate">
+          </div>
+          <div class="field">
+            <label>الوقت الجديد</label>
+            <div class="slots" id="newSlots"><span style="color:var(--muted);font-size:12.5px;">اختار تاريخ الأول</span></div>
+          </div>
+          <button class="btn btn-reschedule" id="confirmRescheduleBtn" style="width:100%;">تأكيد التعديل</button>
+        </div>
+      ` : ''}
+      <div class="msg" id="msgBox"></div>
+    </div>
+  `;
+
+  if(!cancelled){
+    document.getElementById('cancelBtn').addEventListener('click', doCancel);
+    document.getElementById('showRescheduleBtn').addEventListener('click', () => {
+      document.getElementById('reschedulePanel').style.display = 'block';
+    });
+    document.getElementById('newDate').addEventListener('change', renderNewSlots);
+    document.getElementById('confirmRescheduleBtn').addEventListener('click', doReschedule);
+  }
+}
+
+async function renderNewSlots(){
+  const date = document.getElementById('newDate').value;
+  const grid = document.getElementById('newSlots');
+  if(!date){ grid.innerHTML = '<span style="color:var(--muted);font-size:12.5px;">اختار تاريخ الأول</span>'; return; }
+  grid.innerHTML = '<span style="color:var(--muted);font-size:12.5px;">جارٍ التحقق...</span>';
+
+  const { data: existing } = await sb.from('public_availability').select('appointment_time')
+    .eq('clinic_id', booking.clinic_id).eq('appointment_date', date).eq('status', 'confirmed');
+  const taken = new Set((existing || []).map(b => b.appointment_time));
+  selectedNewSlot = null;
+
+  grid.innerHTML = ALL_SLOTS.map(s => `
+    <button type="button" class="slot-btn" ${taken.has(s.label) ? 'disabled' : ''} onclick="selectNewSlot('${s.label}', this)">${s.label}</button>
+  `).join('');
+}
+
+function selectNewSlot(label, btn){
+  selectedNewSlot = label;
+  document.querySelectorAll('#newSlots .slot-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+window.selectNewSlot = selectNewSlot;
+
+function showMsg(text, type){
+  const box = document.getElementById('msgBox');
+  box.textContent = text;
+  box.className = 'msg ' + type;
+  box.style.display = 'block';
+}
+
+async function doCancel(){
+  if(!confirm('متأكد إنك عايز تلغي الحجز؟')) return;
+  const { error } = await sb.rpc('cancel_booking_by_id', { p_booking_id: bookingId });
+  if(error){ showMsg('حصل خطأ: ' + error.message, 'error'); return; }
+  booking.status = 'cancelled';
+  render();
+  showMsg('تم إلغاء الحجز بنجاح.', 'success');
+}
+
+async function doReschedule(){
+  const newDate = document.getElementById('newDate').value;
+  if(!newDate || !selectedNewSlot){ showMsg('اختار التاريخ والوقت الجديدين.', 'error'); return; }
+  const { error } = await sb.rpc('reschedule_booking_by_id', { p_booking_id: bookingId, p_new_date: newDate, p_new_time: selectedNewSlot });
+  if(error){ showMsg('حصل خطأ: ' + error.message, 'error'); return; }
+  booking.appointment_date = newDate;
+  booking.appointment_time = selectedNewSlot;
+  render();
+  showMsg('تم تعديل الموعد بنجاح، هيوصلك تأكيد جديد على واتساب.', 'success');
+}
+
+boot();
+</script>
+</body>
+</html>
