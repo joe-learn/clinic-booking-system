@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دخول الطاقم الطبي — عيادة النور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F7F3EA; --card:#FFFFFF; --line:#E7E0D2;
+    --blue-deep:#0B3D66; --blue-mid:#1E6FA8; --blue-light:#5FA8D3;
+    --gold:#D9A441; --gold-deep:#B9821F; --ink:#1E2A2E; --muted:#7A7264;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',sans-serif;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .blob{position:fixed;border-radius:50%;filter:blur(60px);opacity:.3;z-index:0;pointer-events:none;}
+  .blob1{width:300px;height:300px;background:var(--blue-light);top:-100px;right:-80px;}
+  .blob2{width:260px;height:260px;background:var(--gold);bottom:-80px;left:-80px;opacity:.22;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:36px;max-width:380px;width:100%;
+    box-shadow:0 10px 34px rgba(30,42,46,.08);position:relative;z-index:1;text-align:center;}
+  .brand{font-family:'Almarai',sans-serif;font-weight:800;font-size:18px;margin-bottom:6px;
+    background:linear-gradient(90deg,var(--blue-deep),var(--blue-light));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .card p{color:var(--muted);font-size:13.5px;margin:0 0 26px;}
+  .field{text-align:right;margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
+  .field input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-family:'Tajawal',sans-serif;font-size:14.5px;}
+  .field input:focus{outline:none;border-color:var(--blue-mid);}
+  .submit-btn{width:100%;background:linear-gradient(100deg,var(--blue-deep),var(--blue-mid));border:none;color:#fff;font-weight:700;
+    font-size:15px;padding:13px;border-radius:12px;cursor:pointer;font-family:'Almarai',sans-serif;margin-top:6px;}
+  .submit-btn:disabled{opacity:.5;}
+  .error-msg{color:#963B34;font-size:13px;margin-top:14px;display:none;}
+  .back-link{display:inline-block;margin-top:20px;font-size:12.5px;color:var(--muted);text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+
+<div class="card">
+  <div class="brand">⚕ عيادة النور</div>
+  <p>تسجيل دخول الطاقم الطبي</p>
+
+  <form id="loginForm">
+    <div class="field">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="fEmail" required>
+    </div>
+    <div class="field">
+      <label>كلمة المرور</label>
+      <input type="password" id="fPassword" required>
+    </div>
+    <button type="submit" class="submit-btn" id="submitBtn">دخول</button>
+  </form>
+  <div class="error-msg" id="errorMsg"></div>
+  <a href="index.html" class="back-link">← الرجوع لصفحة الحجز</a>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wrkhtqomywaqsiywqhcj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indya2h0cW9teXdhcXNpeXdxaGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTEzNTQsImV4cCI6MjEwMDI4NzM1NH0.82xn22D3RUb-6Bp0avRk6-98SmkgL77a2zCTIRrpK_0';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  errorMsg.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'جارٍ الدخول...';
+
+  const email = document.getElementById('fEmail').value;
+  const password = document.getElementById('fPassword').value;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    errorMsg.textContent = 'بيانات الدخول غير صحيحة، حاول تاني.';
+    errorMsg.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'دخول';
+    return;
+  }
+
+  const { data: staffRows } = await sb.from('staff').select('*').eq('user_id', data.user.id).limit(1);
+  const staff = staffRows && staffRows[0];
+
+  if (!staff) {
+    errorMsg.textContent = 'الحساب ده مش مربوط بأي عيادة.';
+    errorMsg.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'دخول';
+    return;
+  }
+
+  window.location.href = staff.role === 'owner' ? 'owner-dashboard.html' : 'doctor-dashboard.html';
+});
+</script>
+</body>
+</html>
