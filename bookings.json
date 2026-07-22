@@ -44,7 +44,7 @@
       "appointmentDate": "2026-07-24",
       "appointmentTime": "12:00 م",
       "notes": "",
-      "status": "confirmed",
+      "status": "cancelled",
       "receivedAt": "2026-07-22T10:17:07.832Z",
       "whatsappStatus": "sent",
       "reminderSent": null,
@@ -52,7 +52,7 @@
       "calendarEventId": "ku8c3pl5kr71udhd21lt03rr68",
       "id": 4,
       "createdAt": "2026-07-22T10:17:07.847Z",
-      "updatedAt": "2026-07-22T10:17:09.178Z"
+      "updatedAt": "2026-07-22T10:20:40.988Z"
     },
     {
       "bookingId": "bk_1784714541972",
@@ -73,5 +73,5 @@
       "updatedAt": "2026-07-22T10:14:42.868Z"
     }
   ],
-  "updatedAt": "2026-07-22T10:20:24.626Z"
+  "updatedAt": "2026-07-22T10:20:43.001Z"
 }
