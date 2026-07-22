@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>عيادة النور لطب الأسنان — احجز موعدك</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#16302B; --teal:#1F6F63; --teal-deep:#134A42; --rose:#E8677D; --rose-deep:#D14D64;
+    --bg:#FAFAF8; --card:#FFFFFF; --line:#E4E9E6; --muted:#6B7C78; --mint:#EEF5F2;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',sans-serif;line-height:1.6;}
+  h1,h2,h3{font-family:'Almarai',sans-serif;margin:0;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px;}
+
+  /* Hero */
+  .hero{padding:56px 0 40px;text-align:center;}
+  .hero .badge{display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--teal-deep);
+    padding:7px 16px;border-radius:100px;font-size:13px;font-weight:700;margin-bottom:20px;}
+  .hero h1{font-size:34px;font-weight:800;color:var(--teal-deep);margin-bottom:12px;}
+  .hero p{color:var(--muted);font-size:16px;max-width:480px;margin:0 auto;}
+
+  /* Smile divider — signature element */
+  .smile-divider{width:100%;height:40px;margin:8px 0 32px;}
+  .smile-divider path{fill:none;stroke:var(--rose);stroke-width:3;stroke-linecap:round;}
+
+  /* Services */
+  .section-label{font-size:13px;font-weight:700;color:var(--rose-deep);letter-spacing:.4px;margin-bottom:10px;}
+  .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:40px;}
+  .svc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center;
+    transition:transform .15s, box-shadow .15s; cursor:pointer;}
+  .svc:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,111,99,.1);}
+  .svc.selected{border-color:var(--teal);background:var(--mint);}
+  .svc .icon{font-size:26px;margin-bottom:8px;}
+  .svc .name{font-weight:700;font-size:14.5px;margin-bottom:4px;}
+  .svc .price{color:var(--muted);font-size:12.5px;font-family:'IBM Plex Mono',monospace;}
+
+  /* Form card */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;margin-bottom:40px;
+    box-shadow:0 4px 24px rgba(20,60,50,.05);}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:7px;}
+  .field input, .field select, .field textarea{
+    width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;
+    font-family:'Tajawal',sans-serif;font-size:14.5px;background:#fff;color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);}
+  .field textarea{resize:vertical;min-height:70px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;}
+  .slot-btn{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:10px 6px;font-family:'Tajawal',sans-serif;
+    font-size:13.5px;cursor:pointer;color:var(--ink);}
+  .slot-btn.selected{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700;}
+  .slot-btn:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed;}
+
+  .submit-btn{width:100%;background:var(--rose);border:none;color:#fff;font-weight:700;font-size:16px;
+    padding:15px;border-radius:14px;cursor:pointer;font-family:'Almarai',sans-serif;transition:background .15s;}
+  .submit-btn:hover{background:var(--rose-deep);}
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .success-box, .error-box{border-radius:16px;padding:22px;text-align:center;display:none;}
+  .success-box{background:var(--mint);border:1.5px solid var(--teal);}
+  .success-box h3{color:var(--teal-deep);margin-bottom:8px;}
+  .success-box p{color:var(--muted);margin:0;font-size:14px;}
+  .error-box{background:#FDECEC;border:1.5px solid var(--rose);color:var(--rose-deep);}
+
+  /* Info footer */
+  .info{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:24px 0 50px;color:var(--muted);font-size:13.5px;text-align:center;}
+  .info b{color:var(--ink);}
+  .loading{text-align:center;color:var(--muted);padding:60px 0;}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <div class="loading" id="loadingState">جارٍ تحميل بيانات العيادة...</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wrkhtqomywaqsiywqhcj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indya2h0cW9teXdhcXNpeXdxaGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTEzNTQsImV4cCI6MjEwMDI4NzM1NH0.82xn22D3RUb-6Bp0avRk6-98SmkgL77a2zCTIRrpK_0';
+const CLINIC_SLUG = 'nour-clinic';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ALL_SLOTS = [
+  {label:'10:00 ص', hour:10}, {label:'11:00 ص', hour:11}, {label:'12:00 م', hour:12},
+  {label:'1:00 م', hour:13}, {label:'3:00 م', hour:15}, {label:'4:00 م', hour:16}, {label:'5:00 م', hour:17}
+];
+const SERVICE_ICONS = {'كشف عام':'🦷','تنظيف الأسنان':'✨','استشارة تقويم':'😁','تبييض الأسنان':'💎'};
+
+let clinic = null;
+let services = [];
+let selectedServiceId = null;
+let selectedSlot = null;
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+async function init(){
+  const { data: clinicRows, error: clinicErr } = await sb.from('clinics').select('*').eq('slug', CLINIC_SLUG).limit(1);
+  if(clinicErr || !clinicRows || clinicRows.length === 0){
+    document.getElementById('app').innerHTML = '<div class="loading">تعذر تحميل بيانات العيادة، حاول تاني بعد شوية.</div>';
+    return;
+  }
+  clinic = clinicRows[0];
+
+  const { data: svcRows } = await sb.from('services').select('*').eq('clinic_id', clinic.id).order('price');
+  services = svcRows || [];
+
+  render();
+}
+
+function render(){
+  document.getElementById('app').innerHTML = `
+    <div class="hero">
+      <div class="badge">⚕ ${escapeHtml(clinic.name)}</div>
+      <h1>احجز موعدك في ثوانٍ</h1>
+      <p>اختار الخدمة والميعاد اللي يناسبك، وهيوصلك تأكيد فوري.</p>
+    </div>
+
+    <svg class="smile-divider" viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0,10 Q200,40 400,10"/></svg>
+
+    <div class="section-label">الخدمات</div>
+    <div class="services" id="servicesGrid"></div>
+
+    <div class="card">
+      <form id="bookingForm">
+        <div class="field">
+          <label>الاسم بالكامل</label>
+          <input type="text" id="fName" required placeholder="اكتب اسمك">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>رقم الهاتف</label>
+            <input type="tel" id="fPhone" required placeholder="01xxxxxxxxx">
+          </div>
+          <div class="field">
+            <label>التاريخ</label>
+            <input type="date" id="fDate" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>الوقت المتاح</label>
+          <div class="slots" id="slotsGrid"><span style="color:var(--muted);font-size:13px;">اختار تاريخ الأول</span></div>
+        </div>
+        <div class="field">
+          <label>ملاحظات (اختياري)</label>
+          <textarea id="fNotes" placeholder="أي تفاصيل حابب تضيفها"></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">تأكيد الحجز</button>
+      </form>
+
+      <div class="success-box" id="successBox">
+        <h3>تم الحجز بنجاح ✅</h3>
+        <p>هيوصلك تأكيد على واتساب قريبًا.</p>
+      </div>
+      <div class="error-box" id="errorBox"></div>
+    </div>
+
+    <div class="info">
+      <div>📍 <b>العنوان:</b> ${escapeHtml(clinic.address || '')}</div>
+      <div>🕐 <b>مواعيد العمل:</b> ${escapeHtml(clinic.working_hours || '')}</div>
+      <div>📞 <b>تليفون:</b> ${escapeHtml(clinic.phone || '')}</div>
+    </div>
+  `;
+
+  renderServices();
+  document.getElementById('fDate').addEventListener('change', renderSlots);
+  document.getElementById('bookingForm').addEventListener('submit', submitBooking);
+}
+
+function renderServices(){
+  const grid = document.getElementById('servicesGrid');
+  grid.innerHTML = services.map(s => `
+    <div class="svc" data-id="${s.id}" onclick="selectService('${s.id}')">
+      <div class="icon">${SERVICE_ICONS[s.name] || '🦷'}</div>
+      <div class="name">${escapeHtml(s.name)}</div>
+      <div class="price">${s.price} جنيه</div>
+    </div>
+  `).join('');
+}
+
+function selectService(id){
+  selectedServiceId = id;
+  document.querySelectorAll('.svc').forEach(el => el.classList.toggle('selected', el.dataset.id === id));
+}
+window.selectService = selectService;
+
+async function renderSlots(){
+  const date = document.getElementById('fDate').value;
+  const grid = document.getElementById('slotsGrid');
+  if(!date){ grid.innerHTML = '<span style="color:var(--muted);font-size:13px;">اختار تاريخ الأول</span>'; return; }
+  grid.innerHTML = '<span style="color:var(--muted);font-size:13px;">جارٍ التحقق من المواعيد المتاحة...</span>';
+
+  const { data: existing } = await sb.from('bookings').select('appointment_time')
+    .eq('clinic_id', clinic.id).eq('appointment_date', date).eq('status', 'confirmed');
+
+  const taken = new Set((existing || []).map(b => b.appointment_time));
+  selectedSlot = null;
+
+  grid.innerHTML = ALL_SLOTS.map(s => `
+    <button type="button" class="slot-btn" data-label="${s.label}" ${taken.has(s.label) ? 'disabled' : ''} onclick="selectSlot('${s.label}', this)">${s.label}</button>
+  `).join('');
+}
+
+function selectSlot(label, btn){
+  selectedSlot = label;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+window.selectSlot = selectSlot;
+
+async function submitBooking(e){
+  e.preventDefault();
+  const errorBox = document.getElementById('errorBox');
+  errorBox.style.display = 'none';
+
+  if(!selectedServiceId){ showError('اختار الخدمة المطلوبة الأول.'); return; }
+  if(!selectedSlot){ showError('اختار وقت الحجز.'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'جارٍ الحجز...';
+
+  const service = services.find(s => s.id === selectedServiceId);
+  const payload = {
+    clinic_id: clinic.id,
+    service_id: service.id,
+    service_name: service.name,
+    client_name: document.getElementById('fName').value,
+    phone: document.getElementById('fPhone').value,
+    appointment_date: document.getElementById('fDate').value,
+    appointment_time: selectedSlot,
+    notes: document.getElementById('fNotes').value,
+    status: 'confirmed'
+  };
+
+  const { error } = await sb.from('bookings').insert(payload);
+
+  btn.disabled = false; btn.textContent = 'تأكيد الحجز';
+
+  if(error){
+    showError('حصل خطأ في الحجز، حاول تاني: ' + error.message);
+    return;
+  }
+
+  document.getElementById('bookingForm').style.display = 'none';
+  document.getElementById('successBox').style.display = 'block';
+}
+
+function showError(msg){
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+init();
+</script>
+</body>
+</html>
