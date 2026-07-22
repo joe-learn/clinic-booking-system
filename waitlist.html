@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قائمة الانتظار — عيادة النور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F7F3EA; --card:#FFFFFF; --line:#E7E0D2;
+    --blue-deep:#0B3D66; --blue-mid:#1E6FA8; --blue-light:#5FA8D3;
+    --gold:#D9A441; --gold-deep:#B9821F; --ink:#1E2A2E; --muted:#7A7264;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',sans-serif;min-height:100vh;
+    display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow-x:hidden;}
+  .blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.28;z-index:0;pointer-events:none;}
+  .blob1{width:280px;height:280px;background:var(--blue-light);top:-100px;right:-80px;}
+  .blob2{width:240px;height:240px;background:var(--gold);bottom:-70px;left:-80px;opacity:.2;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px;max-width:420px;width:100%;
+    box-shadow:0 8px 28px rgba(30,42,46,.06);position:relative;z-index:1;}
+  h1{font-family:'Almarai',sans-serif;font-weight:800;font-size:19px;margin:0 0 6px;
+    background:linear-gradient(90deg,var(--blue-deep),var(--blue-light));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .card p{color:var(--muted);font-size:13.5px;margin:0 0 22px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
+  .field input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;font-family:'Tajawal',sans-serif;font-size:14px;}
+  .submit-btn{width:100%;background:linear-gradient(100deg,var(--gold-deep),var(--gold));border:none;color:#3A2705;font-weight:700;
+    font-size:15px;padding:13px;border-radius:12px;cursor:pointer;font-family:'Almarai',sans-serif;}
+  .msg{border-radius:12px;padding:14px;margin-top:14px;font-size:13px;text-align:center;display:none;}
+  .msg.success{background:#EEF6EE;border:1.5px solid #4C9A6A;color:#2E6B45;}
+  .msg.error{background:#FCEDEC;border:1.5px solid #C65A52;color:#963B34;}
+  .back{display:block;text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted);text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="blob blob1"></div><div class="blob blob2"></div>
+<div class="card">
+  <h1>⏳ قائمة انتظار المواعيد</h1>
+  <p>لو اليوم اللي عايزه محجوز بالكامل، سجّل هنا وهنبلغك أول ما يفضى ميعاد.</p>
+  <form id="waitForm">
+    <div class="field"><label>الاسم بالكامل</label><input type="text" id="fName" required></div>
+    <div class="field"><label>رقم الهاتف</label><input type="tel" id="fPhone" required placeholder="01xxxxxxxxx"></div>
+    <div class="field"><label>اليوم اللي حابب تحجز فيه</label><input type="date" id="fDate" required></div>
+    <button type="submit" class="submit-btn" id="submitBtn">سجّلني في قائمة الانتظار</button>
+  </form>
+  <div class="msg" id="msgBox"></div>
+  <a href="index.html" class="back">← الرجوع لصفحة الحجز</a>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wrkhtqomywaqsiywqhcj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indya2h0cW9teXdhcXNpeXdxaGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTEzNTQsImV4cCI6MjEwMDI4NzM1NH0.82xn22D3RUb-6Bp0avRk6-98SmkgL77a2zCTIRrpK_0';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const CLINIC_SLUG = 'nour-clinic';
+
+document.getElementById('waitForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const msgBox = document.getElementById('msgBox');
+  msgBox.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'جارٍ التسجيل...';
+
+  const { data: clinicRows } = await sb.from('clinics').select('id').eq('slug', CLINIC_SLUG).limit(1);
+  const clinicId = clinicRows && clinicRows[0] && clinicRows[0].id;
+
+  const { error } = await sb.from('waitlist').insert({
+    clinic_id: clinicId,
+    client_name: document.getElementById('fName').value,
+    phone: document.getElementById('fPhone').value,
+    preferred_date: document.getElementById('fDate').value,
+    notified: false
+  });
+
+  btn.disabled = false; btn.textContent = 'سجّلني في قائمة الانتظار';
+
+  if(error){
+    msgBox.textContent = 'حصل خطأ: ' + error.message;
+    msgBox.className = 'msg error'; msgBox.style.display = 'block';
+    return;
+  }
+  document.getElementById('waitForm').style.display = 'none';
+  msgBox.textContent = 'تم التسجيل! هنبلغك أول ما يفضى ميعاد في اليوم ده.';
+  msgBox.className = 'msg success'; msgBox.style.display = 'block';
+});
+</script>
+</body>
+</html>
