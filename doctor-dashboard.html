@@ -46,8 +46,9 @@
   .cal-day.today{border-color:var(--gold);}
   .cal-day.selected{background:linear-gradient(180deg,#fff,#EFF6FB);border-color:var(--blue-mid);}
   .cal-day .num{font-family:'IBM Plex Mono',monospace;font-weight:600;}
-  .cal-day .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);margin-top:4px;}
-  .cal-day .count{font-size:10px;color:var(--blue-mid);font-weight:700;margin-top:2px;}
+  .cal-day.has-bookings{background:#FBF7EF;border-color:var(--gold);}
+  .cal-day .dot{width:7px;height:7px;border-radius:50%;background:var(--gold-deep);margin-top:3px;}
+  .cal-day .count{font-size:10px;color:var(--blue-mid);font-weight:700;margin-top:1px;}
 
   .day-label{font-family:'Almarai',sans-serif;font-weight:800;font-size:15px;color:var(--gold-deep);margin-bottom:10px;
     display:flex;align-items:center;gap:8px;}
@@ -173,9 +174,9 @@ function renderCalendar(){
     const count = countByDate[dateStr] || 0;
     const isToday = dateStr === todayStr;
     const isSelected = dateStr === selectedDate;
-    html += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''}" onclick="selectDay('${dateStr}')">
+    html += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${count>0?'has-bookings':''}" onclick="selectDay('${dateStr}')">
       <div class="num">${d}</div>
-      ${count > 0 ? `<div class="count">${count}</div>` : ''}
+      ${count > 0 ? `<div class="dot"></div><div class="count">${count}</div>` : ''}
     </div>`;
   }
   grid.innerHTML = html;
