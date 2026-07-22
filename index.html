@@ -290,7 +290,10 @@ async function submitBooking(e){
   if (doctors.length === 1) doctorId = doctors[0].id;
   else if (doctors.length > 1) doctorId = document.getElementById('fDoctor').value;
 
+  const newBookingId = crypto.randomUUID();
+
   const payload = {
+    id: newBookingId,
     clinic_id: clinic.id,
     service_id: service.id,
     service_name: service.name,
@@ -304,7 +307,7 @@ async function submitBooking(e){
     status: 'confirmed'
   };
 
-  const { data: inserted, error } = await sb.from('bookings').insert(payload).select('id').single();
+  const { error } = await sb.from('bookings').insert(payload);
 
   btn.disabled = false; btn.textContent = 'تأكيد الحجز';
 
@@ -317,7 +320,7 @@ async function submitBooking(e){
   const successBox = document.getElementById('successBox');
   successBox.style.display = 'block';
   const linkP = document.getElementById('manageLink');
-  if (linkP && inserted) linkP.innerHTML = 'لتعديل أو إلغاء الحجز لاحقًا: <a href="manage.html?id=' + inserted.id + '" style="color:var(--blue-mid);font-weight:700;">اضغط هنا</a>';
+  if (linkP) linkP.innerHTML = 'لتعديل أو إلغاء الحجز لاحقًا: <a href="manage.html?id=' + newBookingId + '" style="color:var(--blue-mid);font-weight:700;">اضغط هنا</a>';
 }
 
 function showError(msg){
