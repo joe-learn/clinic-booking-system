@@ -44,7 +44,7 @@
       "appointmentDate": "2026-07-29",
       "appointmentTime": "10:00 ص",
       "notes": "ابعت ليا اللوكيشن ",
-      "status": "confirmed",
+      "status": "cancelled",
       "receivedAt": "2026-07-22T10:02:21.972Z",
       "whatsappStatus": "sent",
       "reminderSent": null,
@@ -52,8 +52,8 @@
       "calendarEventId": "48nv2o1h86t15bihnj3m26cnco",
       "id": 3,
       "createdAt": "2026-07-22T10:02:21.987Z",
-      "updatedAt": "2026-07-22T10:04:40.939Z"
+      "updatedAt": "2026-07-22T10:13:58.476Z"
     }
   ],
-  "updatedAt": "2026-07-22T10:13:24.597Z"
+  "updatedAt": "2026-07-22T10:14:24.637Z"
 }
